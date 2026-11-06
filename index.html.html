@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff4e8">
+<title>たのしい！どうぶつクイズ＆ずかん</title>
+<style>
+:root{--ink:#51463e;--pink:#f6b9b4;--yellow:#ffe49a;--mint:#c7e8d6;--cream:#fffaf1;--brown:#9a7155}
+*{box-sizing:border-box}body{margin:0;background:#fff4e8;color:var(--ink);font-family:"Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif}
+button{font:inherit;cursor:pointer;border:0;color:var(--ink);font-weight:800}
+.app{max-width:760px;margin:auto;min-height:100vh;padding:14px 14px 92px;background:linear-gradient(#fff8ef,#fff1e8)}
+header{text-align:center;padding:14px 8px 10px}h1{font-size:clamp(23px,6vw,34px);margin:0 0 6px;line-height:1.35;color:#8d624b;text-shadow:1px 2px #fff}
+.subtitle{font-size:13px;color:#9a806f}.status{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:8px 0 14px}
+.pill{background:white;border:2px solid #f4d9c4;border-radius:999px;padding:8px 14px;font-weight:900;box-shadow:0 3px 0 #ecd6c4}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;position:sticky;top:0;z-index:5;background:#fff4e8;padding:7px 0 12px}
+.tab{padding:11px 3px;border-radius:16px;background:#f2e4d8;font-size:13px;box-shadow:0 3px 0 #dfcabb}
+.tab.active{background:#ffe49a;box-shadow:0 3px 0 #e4c77c}
+.panel{background:#fff;border:2px solid #f1ddcc;border-radius:24px;padding:16px;box-shadow:0 5px 0 #ead7c8;margin-bottom:14px}
+h2{font-size:21px;margin:2px 0 8px;color:#8d624b}p{line-height:1.7}
+.animal-stage{background:#fff8e9;border-radius:22px;padding:10px;display:grid;place-items:center;min-height:220px}
+.animal-svg{width:min(70%,250px);height:190px;overflow:visible}.silhouette{filter:brightness(0) saturate(0)}
+.question{font-size:21px;text-align:center;font-weight:900;margin:12px 0}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:13px}
+.choice{background:#fce8df;border-radius:17px;padding:14px 5px;min-height:62px;font-size:16px;box-shadow:0 4px 0 #e8cfc3}
+.choice:active,.mainbtn:active,.tab:active{transform:translateY(2px);box-shadow:none}
+.choice:disabled{opacity:.8;cursor:default}
+.mainbtn{background:#ffdc83;border-radius:18px;padding:13px 18px;box-shadow:0 4px 0 #e5bd65;width:100%;margin-top:10px;font-size:16px}
+.secondary{background:#d9eee1;box-shadow:0 4px 0 #b9d9c5}
+.feedback{text-align:center;font-weight:900;font-size:19px;min-height:32px;margin:10px 0;color:#6e9b69}
+.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.card{background:#fff8ef;border:1px solid #f0dfd0;border-radius:17px;padding:8px 5px;text-align:center;min-width:0}
+.card svg{width:100%;height:86px}.card .name{font-weight:900;font-size:13px;margin-top:2px}.card small{font-size:11px;color:#9b8472}
+.locked svg{filter:brightness(0) saturate(0)}.locked{background:#eee9e4}
+.progress{height:13px;border-radius:20px;background:#eee4dc;overflow:hidden;margin:8px 0}.progress>i{display:block;height:100%;background:#a9d7ba;border-radius:20px}
+.gacha-box{text-align:center;background:#fff5d9;border-radius:20px;padding:18px}.gacha-emoji{font-size:64px}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.note{font-size:12px;color:#917d6e;line-height:1.6}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.toolbar button{flex:1;min-width:110px}
+footer{text-align:center;font-size:11px;color:#a28e7f;padding:12px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(5,1fr)}.choices{max-width:560px;margin:14px auto}.animal-stage{min-height:260px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>🐾 たのしい！どうぶつ 🐾<br>クイズ＆100しゅるいずかん</h1><div class="subtitle">あそんで、あつめて、どうぶつはかせになろう！</div></header>
+<div class="status"><div class="pill">⭐ <span id="stars">0</span>こ</div><div class="pill">📚 あつめた数 <span id="collected">0</span>/100</div></div>
+<nav class="tabs">
+<button class="tab active" data-tab="quiz">🎯 クイズ</button><button class="tab" data-tab="gacha">🎁 ガチャ</button><button class="tab" data-tab="book">📖 ずかん</button><button class="tab" data-tab="room">🏡 マイルーム</button>
+</nav>
+<main>
+<section id="quiz" class="view">
+<div class="panel">
+<h2>シルエットクイズ</h2><p class="note">かげのどうぶつはだれかな？ 3つのなかからえらんでね。</p>
+<div class="animal-stage" id="quizStage"></div><div class="question" id="question">このどうぶつはなあに？</div>
+<div class="choices" id="choices"></div><div class="feedback" id="feedback" aria-live="polite"></div>
+<button class="mainbtn hidden" id="nextBtn">つぎのもんだい ▶</button>
+</div>
+<div class="panel"><b>⭐ あそびかた</b><p class="note">せいかいすると星が1こもらえるよ。星を10こあつめるとガチャができるよ！</p></div>
+</section>
+<section id="gacha" class="view hidden">
+<div class="panel"><h2>わくわく！どうぶつガチャ</h2><div class="gacha-box"><div class="gacha-emoji">🎁</div><p>星10こでカードが3まいでるよ！</p><div class="pill">いまの星：⭐ <span id="gachaStars">0</span>こ</div><button class="mainbtn" id="drawBtn">⭐10こでガチャをまわす！</button><div id="gachaMessage" class="feedback"></div><div id="gachaResults" class="result-grid"></div></div></div>
+</section>
+<section id="book" class="view hidden">
+<div class="panel"><h2>どうぶつずかん</h2><p class="note">カードをあつめると、ずかんに色がつくよ！ 60しゅるいで100しゅるいのずかんがぜんぶひらくよ。</p><div><b><span id="bookCount">0</span>/100 しゅるい</b><div class="progress"><i id="bookProgress" style="width:0%"></i></div></div><div id="bookGrid" class="grid"></div></div>
+</section>
+<section id="room" class="view hidden">
+<div class="panel"><h2>🏡 マイルーム</h2><p>あつめたどうぶつカードをながめよう！</p><div class="gacha-box"><div style="font-size:46px">🌼🐶🌷</div><b>どうぶつコレクション</b><p><span id="roomCount">0</span>しゅるいのどうぶつとおともだち！</p><div class="progress"><i id="roomProgress" style="width:0%"></i></div><div id="roomGrid" class="grid"></div></div></div>
+<div class="panel"><h2>💾 セーブ</h2><p class="note">星やカードはこのスマホのブラウザに自動で保存されるよ。同じブラウザでひらくと、つづきからあそべるよ。</p><div class="toolbar"><button class="mainbtn secondary" id="saveBtn">いまのデータを保存</button><button class="mainbtn" id="resetBtn">はじめからにする</button></div><div id="saveMessage" class="feedback"></div></div>
+</section>
+</main><footer>どうぶつたちと たのしくあそぼう！ 🐾</footer>
+</div>
+<script>
+const ANIMALS = [{"name": "いぬ", "group": "ペット", "emoji": "🐕", "kind": "dog"}, {"name": "ねこ", "group": "ペット", "emoji": "🐈", "kind": "cat"}, {"name": "うさぎ", "group": "ペット", "emoji": "🐇", "kind": "rabbit"}, {"name": "ハムスター", "group": "ペット", "emoji": "🐹", "kind": "hamster"}, {"name": "モルモット", "group": "ペット", "emoji": "🐹", "kind": "guinea"}, {"name": "フェレット", "group": "ペット", "emoji": "🦦", "kind": "ferret"}, {"name": "りす", "group": "森", "emoji": "🐿️", "kind": "squirrel"}, {"name": "ハリネズミ", "group": "森", "emoji": "🦔", "kind": "hedgehog"}, {"name": "インコ", "group": "鳥", "emoji": "🦜", "kind": "parrot"}, {"name": "カナリア", "group": "鳥", "emoji": "🐦", "kind": "bird"}, {"name": "うし", "group": "牧場", "emoji": "🐄", "kind": "cow"}, {"name": "うま", "group": "牧場", "emoji": "🐎", "kind": "horse"}, {"name": "ぶた", "group": "牧場", "emoji": "🐖", "kind": "pig"}, {"name": "ひつじ", "group": "牧場", "emoji": "🐑", "kind": "sheep"}, {"name": "やぎ", "group": "牧場", "emoji": "🐐", "kind": "goat"}, {"name": "にわとり", "group": "牧場", "emoji": "🐔", "kind": "chicken"}, {"name": "ひよこ", "group": "牧場", "emoji": "🐤", "kind": "chick"}, {"name": "あひる", "group": "牧場", "emoji": "🦆", "kind": "duck"}, {"name": "がちょう", "group": "牧場", "emoji": "🪿", "kind": "goose"}, {"name": "ろば", "group": "牧場", "emoji": "🫏", "kind": "donkey"}, {"name": "ぞう", "group": "サバンナ", "emoji": "🐘", "kind": "elephant"}, {"name": "きりん", "group": "サバンナ", "emoji": "🦒", "kind": "giraffe"}, {"name": "らいおん", "group": "サバンナ", "emoji": "🦁", "kind": "lion"}, {"name": "とら", "group": "サバンナ", "emoji": "🐅", "kind": "tiger"}, {"name": "しまうま", "group": "サバンナ", "emoji": "🦓", "kind": "zebra"}, {"name": "さる", "group": "サバンナ", "emoji": "🐒", "kind": "monkey"}, {"name": "ごりら", "group": "サバンナ", "emoji": "🦍", "kind": "gorilla"}, {"name": "かば", "group": "サバンナ", "emoji": "🦛", "kind": "hippo"}, {"name": "さい", "group": "サバンナ", "emoji": "🦏", "kind": "rhino"}, {"name": "ちーたー", "group": "サバンナ", "emoji": "🐆", "kind": "cheetah"}, {"name": "ぱんだ", "group": "森", "emoji": "🐼", "kind": "panda"}, {"name": "こあら", "group": "森", "emoji": "🐨", "kind": "koala"}, {"name": "かんがるー", "group": "森", "emoji": "🦘", "kind": "kangaroo"}, {"name": "わに", "group": "水辺", "emoji": "🐊", "kind": "crocodile"}, {"name": "へび", "group": "水辺", "emoji": "🐍", "kind": "snake"}, {"name": "かめ", "group": "水辺", "emoji": "🐢", "kind": "turtle"}, {"name": "かえる", "group": "水辺", "emoji": "🐸", "kind": "frog"}, {"name": "しか", "group": "森", "emoji": "🦌", "kind": "deer"}, {"name": "きつね", "group": "森", "emoji": "🦊", "kind": "fox"}, {"name": "たぬき", "group": "森", "emoji": "🦝", "kind": "raccoon"}, {"name": "おおかみ", "group": "森", "emoji": "🐺", "kind": "wolf"}, {"name": "くま", "group": "森", "emoji": "🐻", "kind": "bear"}, {"name": "しろくま", "group": "北極", "emoji": "🐻‍❄️", "kind": "polarbear"}, {"name": "らっこ", "group": "海", "emoji": "🦦", "kind": "otter"}, {"name": "あざらし", "group": "海", "emoji": "🦭", "kind": "seal"}, {"name": "ぺんぎん", "group": "海", "emoji": "🐧", "kind": "penguin"}, {"name": "いるか", "group": "海", "emoji": "🐬", "kind": "dolphin"}, {"name": "くじら", "group": "海", "emoji": "🐳", "kind": "whale"}, {"name": "しゃち", "group": "海", "emoji": "🐋", "kind": "orca"}, {"name": "さめ", "group": "海", "emoji": "🦈", "kind": "shark"}, {"name": "たこ", "group": "海", "emoji": "🐙", "kind": "octopus"}, {"name": "いか", "group": "海", "emoji": "🦑", "kind": "squid"}, {"name": "かに", "group": "海", "emoji": "🦀", "kind": "crab"}, {"name": "えび", "group": "海", "emoji": "🦐", "kind": "shrimp"}, {"name": "くらげ", "group": "海", "emoji": "🪼", "kind": "jellyfish"}, {"name": "ひとで", "group": "海", "emoji": "⭐", "kind": "starfish"}, {"name": "かい", "group": "海", "emoji": "🐚", "kind": "shell"}, {"name": "まんぼう", "group": "海", "emoji": "🐟", "kind": "sunfish"}, {"name": "きんぎょ", "group": "海", "emoji": "🐠", "kind": "goldfish"}, {"name": "くまのみ", "group": "海", "emoji": "🐠", "kind": "clownfish"}, {"name": "いるか", "group": "海", "emoji": "🐬", "kind": "dolphin2"}, {"name": "かつお", "group": "海", "emoji": "🐟", "kind": "tuna"}, {"name": "たい", "group": "海", "emoji": "🐟", "kind": "sea_bream"}, {"name": "ふぐ", "group": "海", "emoji": "🐡", "kind": "puffer"}, {"name": "たつのおとしご", "group": "海", "emoji": "🐉", "kind": "seahorse"}, {"name": "あんこう", "group": "海", "emoji": "🐟", "kind": "angler"}, {"name": "うなぎ", "group": "海", "emoji": "🐍", "kind": "eel"}, {"name": "あゆ", "group": "川", "emoji": "🐟", "kind": "ayu"}, {"name": "こい", "group": "川", "emoji": "🐟", "kind": "koi"}, {"name": "さけ", "group": "川", "emoji": "🐟", "kind": "salmon"}, {"name": "わし", "group": "鳥", "emoji": "🦅", "kind": "eagle"}, {"name": "ふくろう", "group": "鳥", "emoji": "🦉", "kind": "owl"}, {"name": "ぺりかん", "group": "鳥", "emoji": "🦩", "kind": "pelican"}, {"name": "ふらみんご", "group": "鳥", "emoji": "🦩", "kind": "flamingo"}, {"name": "くじゃく", "group": "鳥", "emoji": "🦚", "kind": "peacock"}, {"name": "つる", "group": "鳥", "emoji": "🦢", "kind": "crane"}, {"name": "はくちょう", "group": "鳥", "emoji": "🦢", "kind": "swan"}, {"name": "すずめ", "group": "鳥", "emoji": "🐦", "kind": "sparrow"}, {"name": "からす", "group": "鳥", "emoji": "🐦‍⬛", "kind": "crow"}, {"name": "きつつき", "group": "鳥", "emoji": "🐦", "kind": "woodpecker"}, {"name": "ちょう", "group": "むし", "emoji": "🦋", "kind": "butterfly"}, {"name": "かぶとむし", "group": "むし", "emoji": "🪲", "kind": "beetle"}, {"name": "くわがた", "group": "むし", "emoji": "🪲", "kind": "stagbeetle"}, {"name": "てんとうむし", "group": "むし", "emoji": "🐞", "kind": "ladybug"}, {"name": "せみ", "group": "むし", "emoji": "🪰", "kind": "cicada"}, {"name": "とんぼ", "group": "むし", "emoji": "🪰", "kind": "dragonfly"}, {"name": "ばった", "group": "むし", "emoji": "🦗", "kind": "grasshopper"}, {"name": "かまきり", "group": "むし", "emoji": "🦗", "kind": "mantis"}, {"name": "みつばち", "group": "むし", "emoji": "🐝", "kind": "bee"}, {"name": "あり", "group": "むし", "emoji": "🐜", "kind": "ant"}, {"name": "かたつむり", "group": "むし", "emoji": "🐌", "kind": "snail"}, {"name": "みみず", "group": "むし", "emoji": "🪱", "kind": "worm"}, {"name": "くも", "group": "むし", "emoji": "🕷️", "kind": "spider"}, {"name": "ほたる", "group": "むし", "emoji": "✨", "kind": "firefly"}, {"name": "なまけもの", "group": "森", "emoji": "🦥", "kind": "sloth"}, {"name": "アルパカ", "group": "牧場", "emoji": "🦙", "kind": "alpaca"}, {"name": "ラクダ", "group": "砂漠", "emoji": "🐪", "kind": "camel"}, {"name": "バイソン", "group": "牧場", "emoji": "🐂", "kind": "bison"}, {"name": "ミーアキャット", "group": "砂漠", "emoji": "🐾", "kind": "meerkat"}, {"name": "レッサーパンダ", "group": "森", "emoji": "🐾", "kind": "redpanda"}];
+const SAVE_KEY = "animalPictureBookGame_v1";
+let state = {stars:0, cards:{}, quizCount:0, correct:0};
+function load(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&typeof s==="object")state={...state,...s,cards:s.cards||{}};}catch(e){}}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));return true}catch(e){return false}}
+function count(){return Object.keys(state.cards).filter(k=>state.cards[k]>0).length}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function animalSVG(a, silhouette=false){
+ const palettes=["#e9b879","#d98f75","#e8c9a0","#9b9b91","#d6a4a0","#b9c9a4","#e8d28d"];
+ const idx=ANIMALS.indexOf(a), c=palettes[idx%palettes.length], dark="#594b43";
+ let body="", extras="";
+ const kind=a.kind;
+ // Each species receives a distinct body silhouette family and individual markings.
+ if(["elephant","hippo","rhino"].includes(kind)){body=`<ellipse cx="100" cy="111" rx="58" ry="43"/><circle cx="151" cy="83" r="28"/>`;extras=kind==="elephant"?`<ellipse cx="135" cy="77" rx="19" ry="25"/><path d="M170 94 Q187 118 171 137 Q159 144 158 127" fill="none" stroke="${c}" stroke-width="13" stroke-linecap="round"/>`:kind==="rhino"?`<path d="M168 80 l25 -12 -13 26z"/>`:`<path d="M165 99 Q185 105 178 117"/>`}
+ else if(["giraffe","camel","alpaca","horse","donkey","zebra","cow","deer","goat","sheep","bison"].includes(kind)){body=`<ellipse cx="98" cy="119" rx="54" ry="34"/><path d="M130 104 Q140 78 151 54 L170 56 Q158 91 160 111Z"/><circle cx="169" cy="55" r="19"/>`;extras=kind==="giraffe"?`<path d="M145 78 l8 -3 m5 -15 l8 2 m-18 32 l8 -2"/>`:kind==="zebra"?`<path d="M65 91l13 17m8 -22l12 18m9 -17l11 18m9 -15l9 14" stroke="${dark}" stroke-width="5" fill="none"/>`:kind==="sheep"||kind==="alpaca"?`<circle cx="155" cy="49" r="20"/><circle cx="169" cy="52" r="15"/>`:`<path d="M67 143v28m24 -25v25m38 -26v26m20 -31v31" stroke="${dark}" stroke-width="7" stroke-linecap="round"/>`}
+ else if(["bird","parrot","chicken","chick","duck","goose","eagle","owl","flamingo","swan","sparrow","crow","woodpecker","peacock","crane","pelican"].includes(kind)){body=`<ellipse cx="102" cy="112" rx="47" ry="36"/><circle cx="145" cy="81" r="25"/><path d="M164 81l26 9 -26 8z"/>`;extras=`<path d="M74 112 Q103 72 132 112 Q105 143 74 112" fill="${dark}" opacity=".22"/><path d="M93 144v23m20 -23v23" stroke="${dark}" stroke-width="5" stroke-linecap="round"/>`}
+ else if(["fish","tuna","sea_bream","puffer","ayu","koi","salmon","goldfish","clownfish","sunfish","angler","eel","seahorse"].includes(kind)){body=`<path d="M42 105 Q91 54 151 104 Q94 158 42 105Z"/><path d="M145 104l35 -28v56z"/>`;extras=`<path d="M95 73l15 -17 12 19m-27 57l15 17 12 -18" fill="${dark}" opacity=".25"/>`}
+ else if(["octopus","jellyfish","crab","shrimp","starfish","shell","squid"].includes(kind)){body=kind==="starfish"?`<path d="M100 38l17 48 51 -5 -39 34 14 50 -43 -29 -43 29 14 -50 -39 -34 51 5z"/>`:`<ellipse cx="105" cy="87" rx="39" ry="34"/><path d="M75 111q-18 20 -7 48m25 -45q-7 29 5 45m20 -45q8 28 0 45m20 -48q21 20 11 48" fill="none" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`}
+ else if(["butterfly","bee","beetle","stagbeetle","ladybug","cicada","dragonfly","grasshopper","mantis","ant","spider","snail","worm","firefly"].includes(kind)){body=kind==="butterfly"?`<ellipse cx="100" cy="100" rx="12" ry="43"/><ellipse cx="70" cy="83" rx="30" ry="24"/><ellipse cx="130" cy="83" rx="30" ry="24"/><ellipse cx="75" cy="126" rx="23" ry="18"/><ellipse cx="125" cy="126" rx="23" ry="18"/>`:`<ellipse cx="104" cy="108" rx="40" ry="25"/><circle cx="145" cy="95" r="19"/>`;extras=`<path d="M95 75q-15 -25 -23 -22m33 22q15 -25 23 -22" fill="none" stroke="${dark}" stroke-width="3"/>`}
+ else {body=`<ellipse cx="101" cy="115" rx="54" ry="39"/><circle cx="147" cy="82" r="28"/>`;extras=`<path d="M129 62l-8 -25 22 15m17 3l17 -20 -1 31" fill="${c}" stroke="${dark}" stroke-width="3" stroke-linejoin="round"/><path d="M63 142v26m32 -23v23m39 -26v26" stroke="${dark}" stroke-width="7" stroke-linecap="round"/>`}
+ const spots = idx%3===0?`<circle cx="80" cy="103" r="6" fill="${dark}" opacity=".25"/><circle cx="111" cy="124" r="5" fill="${dark}" opacity=".25"/>`:"";
+ const eyes=`<circle cx="154" cy="79" r="3.6" fill="#3f3834"/><path d="M165 94q5 4 10 0" fill="none" stroke="#594b43" stroke-width="2.5" stroke-linecap="round"/>`;
+ const fill=silhouette?"#171717":c;
+ let svg=`<svg class="animal-svg ${silhouette?"silhouette":""}" viewBox="0 0 210 190" role="img" aria-label="${esc(a.name)}"><ellipse cx="105" cy="169" rx="58" ry="7" fill="#ddcdbd" opacity=".45"/><g fill="${fill}" stroke="${silhouette?"#171717":dark}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">${body}${extras}${spots}</g>${silhouette?"":`<g>${eyes}</g>`}</svg>`;
+ return svg;
+}
+function cardHTML(a,locked=false){return `<div class="card ${locked?"locked":""}">${animalSVG(a,locked)}<div class="name">${locked?"？？？":esc(a.name)}</div><small>${locked?"まだひみつ":esc(a.group)}</small></div>`}
+function updateStats(){document.getElementById("stars").textContent=state.stars;document.getElementById("collected").textContent=count();document.getElementById("gachaStars").textContent=state.stars;document.getElementById("bookCount").textContent=count();document.getElementById("roomCount").textContent=count();let p=count();document.getElementById("bookProgress").style.width=p+"%";document.getElementById("roomProgress").style.width=p+"%";}
+let current=null,answered=false;
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5)}
+function newQuestion(){answered=false;current=ANIMALS[Math.floor(Math.random()*ANIMALS.length)];document.getElementById("quizStage").innerHTML=animalSVG(current,true);document.getElementById("question").textContent="このどうぶつは なあに？";document.getElementById("feedback").textContent="";document.getElementById("nextBtn").classList.add("hidden");let wrong=shuffle(ANIMALS.filter(a=>a!==current)).slice(0,2);let opts=shuffle([current,...wrong]);document.getElementById("choices").innerHTML=opts.map(a=>`<button class="choice" data-name="${esc(a.name)}" data-kind="${esc(a.kind)}">${esc(a.name)}</button>`).join("");document.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>answer(b)));}
+function answer(btn){if(answered)return;answered=true;let ok=btn.dataset.kind===current.kind && btn.dataset.name===current.name; // names can repeat; kind disambiguates
+ document.querySelectorAll(".choice").forEach(b=>b.disabled=true);
+ if(ok){state.stars++;state.correct++;document.getElementById("feedback").textContent="せいかい！ ⭐ 星を1こゲット！";document.getElementById("feedback").style.color="#659b68";}
+ else{document.getElementById("feedback").textContent="おしい！ こたえは「"+current.name+"」だよ";document.getElementById("feedback").style.color="#c47d70";}
+ state.quizCount++;save();updateStats();document.getElementById("nextBtn").classList.remove("hidden");}
+function switchTab(tab){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("hidden",v.id!==tab));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="book")renderBook();if(tab==="room")renderRoom();}
+function renderBook(){let unlocked=count()>=60;document.getElementById("bookGrid").innerHTML=ANIMALS.map(a=>cardHTML(a,!state.cards[a.kind]&&!unlocked)).join("");}
+function renderRoom(){let got=ANIMALS.filter(a=>state.cards[a.kind]);document.getElementById("roomGrid").innerHTML=got.length?got.map(a=>cardHTML(a)).join(""):"<p class='note'>まだカードがないよ。クイズやガチャであつめよう！</p>";}
+function draw(){let msg=document.getElementById("gachaMessage"),out=document.getElementById("gachaResults");out.innerHTML="";if(state.stars<10){msg.textContent="星があと"+(10-state.stars)+"こたりないよ";return;}state.stars-=10;let picks=shuffle(ANIMALS).slice(0,3);picks.forEach(a=>{state.cards[a.kind]=(state.cards[a.kind]||0)+1});out.innerHTML=picks.map(a=>cardHTML(a)).join("");msg.textContent="カードを3まいゲット！";save();updateStats();}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+document.getElementById("nextBtn").addEventListener("click",newQuestion);
+document.getElementById("drawBtn").addEventListener("click",draw);
+document.getElementById("saveBtn").addEventListener("click",()=>{let ok=save();document.getElementById("saveMessage").textContent=ok?"セーブしたよ！ 💾":"保存できなかったよ。ブラウザの設定を確認してね。";});
+document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("星やカードをぜんぶけして、はじめからにする？")){state={stars:0,cards:{},quizCount:0,correct:0};save();updateStats();renderRoom();renderBook();document.getElementById("saveMessage").textContent="あたらしくスタートしたよ！";}});
+load();updateStats();newQuestion();
+</script>
+</body></html>
